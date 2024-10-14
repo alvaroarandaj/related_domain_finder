@@ -13,6 +13,9 @@ import ssl
 import idna
 import dns.reversename
 
+partial_related_domains = []
+debug = False
+
 def get_ns_records(domain):
     try:
         answers = dns.resolver.resolve(domain, 'NS')
@@ -72,16 +75,19 @@ def is_subdomain(domain1, domain2):
     
     # Verificar si uno está contenido en el otro
     if full_domain1 == full_domain2:
-        print(f"NS {domain1} y {domain2} son el mismo dominio BASE")
-        print(f"")
+        if debug:
+            print(f"NS {domain1} y {domain2} son el mismo dominio BASE")
+            print(f"")
         return True  # Son el mismo dominio base
     if full_domain1 in domain2:
-        print(f"NS {full_domain1} es subdominio de {domain2}")
-        print(f"")
+        if debug:
+            print(f"NS {full_domain1} es subdominio de {domain2}")
+            print(f"")
         return True
     if full_domain2 in domain1:
-        print(f"NS {full_domain2} es subdominio de {domain1}")
-        print(f"")
+        if debug:    
+            print(f"NS {full_domain2} es subdominio de {domain1}")
+            print(f"")
         return True
     
     return False
@@ -91,7 +97,8 @@ def resolve_domain(domain):
     try:
         return socket.gethostbyname(domain)
     except socket.gaierror as e:
-        print(f"Error resolving domain {domain}: {e}")
+        if debug:
+            print(f"Error resolving domain {domain}: {e}")
         return None
     
 def get_cert(domain):
@@ -143,23 +150,28 @@ def compare_certs(cert1, cert2):
     
     # Compare issuer
     if cert1['issuer'] == cert2['issuer']:
-        print("Issuers are the same.")
+        if debug:
+            print("Issuers are the same.")
     
     # Compare subject
     if cert1['subject'] == cert2['subject']:
-        print("Subjects are the same.")
+        if debug:
+            print("Subjects are the same.")
     
     # Compare serial number
     if cert1['serialNumber'] == cert2['serialNumber']:
-        print("Serial numbers are the same.")
+        if debug:
+            print("Serial numbers are the same.")
     
     return cert1['issuer'] == cert2['issuer'] or cert1['subject'] == cert2['subject'] or cert1['serialNumber'] == cert2['serialNumber']
 
 
 # Función para determinar si dos dominios están relacionados o no
-def domainsAreRelated(domain1, domain2):
+def domainsAreRelated(domain1, domain2, complete_domain):
 
-    print(f"## Comparing domains: {domain1} vs {domain2} #####")
+    print(f"Analizing domain: {complete_domain}")
+
+    conditions_related = 0
 
     # Comprobar si compraten mismos servidores de dominio NS (Name Server)
     ns1 = get_ns_records(domain1)
@@ -171,23 +183,31 @@ def domainsAreRelated(domain1, domain2):
                 #print(f"NS records for {domain1}: {ns1}")
                 #print(f"NS records for {domain2}: {ns2}")
                 #print(f"NS records are {'the same' if same_ns else 'different'}")
-                print(f"## -- SAME NS")
+                conditions_related += +1
+                if debug:
+                    print(f"## -- SAME NS")
             else: #Miramos a ver si uno está contenido en el otro.
                 same_ns = False
                 for item in ns1:
                     if is_subdomain(item, domain2):
                         same_ns = True
-                        print(f"## -- SAME NS")
+                        conditions_related += +1
+                        if debug:
+                            print(f"## -- SAME NS")
                 for item in ns2:
                     if is_subdomain(item, domain1):
                         same_ns = True
-                        print(f"## -- SAME NS")
+                        conditions_related += +1
+                        if debug:    
+                            print(f"## -- SAME NS")
         else:
             same_ns = False
-            print(f"## -- DIFFERENT NS")
+            if debug:
+                print(f"## -- DIFFERENT NS")
     else:
         same_ns = False
-        print(f"## -- DIFFERENT NS")
+        if debug:
+            print(f"## -- DIFFERENT NS")
 
     a1 = get_a_records(domain1)
     if a1:
@@ -197,13 +217,17 @@ def domainsAreRelated(domain1, domain2):
             #print(f"A records for {domain1}: {a1}")
             #print(f"A records for {domain2}: {a2}")
             #print(f"A records are {'the same' if same_a else 'different'}")
-            print(f"## -- SAME A RECORDS IP V4")
+            conditions_related += +1
+            if debug:
+                print(f"## -- SAME A RECORDS IP V4")
         else:
             same_a = False
-            print(f"## -- DIFFERENT A RECORDS IP V4")
+            if debug:
+                print(f"## -- DIFFERENT A RECORDS IP V4")
     else:
         same_a = False 
-        print(f"## -- DIFFERENT A RECORDS IP V4")          
+        if debug:
+            print(f"## -- DIFFERENT A RECORDS IP V4")          
 
     aaaa1 = get_a_records(domain1)
     if aaaa1:
@@ -213,13 +237,17 @@ def domainsAreRelated(domain1, domain2):
             #print(f"A records for {domain1}: {aaaa1}")
             #print(f"A records for {domain2}: {aaaa2}")
             #print(f"A records are {'the same' if same_aaaa else 'different'}")
-            print(f"## -- SAME A RECORDS IP V6")
+            conditions_related += +1
+            if debug:
+                print(f"## -- SAME A RECORDS IP V6")
         else:
             same_aaaa = False
-            print(f"## -- DIFFERENT A RECORDS IP V6")
+            if debug:
+                print(f"## -- DIFFERENT A RECORDS IP V6")
     else:
         same_aaaa = False
-        print(f"## -- DIFFERENT A RECORDS IP V6")
+        if debug:
+            print(f"## -- DIFFERENT A RECORDS IP V6")
 
     mx1 = get_mx_records(domain1)
     if mx1:
@@ -229,13 +257,17 @@ def domainsAreRelated(domain1, domain2):
             #print(f"MX records for {domain1}: {mx1}")
             #print(f"MX records for {domain2}: {mx2}")
             #print(f"MX records are {'the same' if same_mx else 'different'}")
-            print(f"## -- SAME MX RECORDS")
+            conditions_related += +1
+            if debug:
+                print(f"## -- SAME MX RECORDS")
         else:
             same_mx = False
-            print(f"## -- DIFFERENT MX RECORDS")
+            if debug:
+                print(f"## -- DIFFERENT MX RECORDS")
     else:
         same_mx = False 
-        print(f"## -- DIFFERENT MX RECORDS")
+        if debug:
+            print(f"## -- DIFFERENT MX RECORDS")
 
     txt1 = get_txt_records(domain1)
     if txt1:
@@ -245,13 +277,17 @@ def domainsAreRelated(domain1, domain2):
             #print(f"TXT records for {domain1}: {txt1}")
             #print(f"TXT records for {domain2}: {txt2}")
             #print(f"TXT records are {'the same' if same_txt else 'different'}")
-            print(f"## -- SAME TXT RECORDS")
+            conditions_related += +1
+            if debug:
+                print(f"## -- SAME TXT RECORDS")
         else:
             same_txt = False
-            print(f"## -- DIFFERENT TXT RECORDS")
+            if debug:
+                print(f"## -- DIFFERENT TXT RECORDS")
     else:
         same_txt = False
-        print(f"## -- DIFFERENT TXT RECORDS")
+        if debug:
+            print(f"## -- DIFFERENT TXT RECORDS")
 
     whois1 = get_whois_info(domain1)
     whois2 = get_whois_info(domain2)
@@ -260,10 +296,19 @@ def domainsAreRelated(domain1, domain2):
     #print(f"")
 
     if whois1 and whois2:
-        print(f"## -- WHOIS registrants are {'the same' if whois1.get('registrant_name') == whois2.get('registrant_name') else 'different'}")
-        print(f"## -- WHOIS emails are {'the same' if whois1.get('emails') == whois2.get('emails') else 'different'}")
+        if debug:
+            print(f"## -- WHOIS registrants are {'the same' if whois1.get('registrant_name') == whois2.get('registrant_name') else 'different'}")
+            print(f"## -- WHOIS emails are {'the same' if whois1.get('emails') == whois2.get('emails') else 'different'}")
+
+        if whois1.get('registrant_name') == whois2.get('registrant_name'):
+            conditions_related += +1
+
+        if whois1.get('emails') == whois2.get('emails'):
+            conditions_related += +1
+
     else:
-        print("## -- WHOIS information could not be fully retrieved")
+        if debug:
+            print("## -- WHOIS information could not be fully retrieved")
     #print(f"")
 
     same_cert = False
@@ -281,6 +326,8 @@ def domainsAreRelated(domain1, domain2):
     if same_ns or same_a or same_aaaa or same_mx or same_txt or same_cert:
         return True
     else:
+        if conditions_related > 3:
+            partial_related_domains.append(domain)
         return False
     
 
@@ -289,7 +336,8 @@ def find_domains_by_ns_reverse(dominio):
         # Resolver la IP del dominio usando dnspython
         respuesta = dns.resolver.resolve(dominio, 'A')  # 'A' record para obtener la IP
         ip = respuesta[0].to_text()  # Convertir la respuesta en texto (dirección IP)
-        print(f"La IP de {dominio} es: {ip}")
+        if debug:
+            print(f"La IP de {dominio} es: {ip}")
 
         # Convierte la IP a una dirección apta para un lookup inverso
         reversename = dns.reversename.from_address(ip)
@@ -302,18 +350,23 @@ def find_domains_by_ns_reverse(dominio):
         return dominios_relacionados
 
     except dns.resolver.NXDOMAIN:
-        print(f"El dominio {dominio} no existe.")
+        if debug:
+            print(f"El dominio {dominio} no existe.")
         return None
     except dns.resolver.NoAnswer:
-        print(f"No se pudo obtener una respuesta para {dominio}.")
+        if debug:
+            print(f"No se pudo obtener una respuesta para {dominio}.")
         return None
     except Exception as e:
-        print(f"Error al resolver el dominio {dominio}: {e}")
+        if debug:
+            print(f"Error al resolver el dominio {dominio}: {e}")
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
-        print(f"No se encontraron registros PTR para la IP: {ip}")
+        if debug:
+            print(f"No se encontraron registros PTR para la IP: {ip}")
         return []
     except Exception as e:
-        print(f"Ocurrió un error al obtener los registros PTR: {e}")
+        if debug:
+            print(f"Ocurrió un error al obtener los registros PTR: {e}")
         return []
 
     
@@ -342,8 +395,9 @@ def find_domains_by_google(api_key, cx, search_term, num_results):
             else:
                 break  # No more results available
         else:
-            print(f"Error: {response.status_code}")
-            print(response.text)
+            if debug:
+                print(f"Error: {response.status_code}")
+                print(response.text)
             break
 
     # for item in results:
@@ -360,14 +414,15 @@ if __name__ == "__main__":
     mode = input("Select mode. [0] DEBUG [1] NORMAL: ")
     input_domain = input("Enter the domain: ")
 
-    #dominios_relacionados = find_domains_by_ns_reverse(input_domain)
-
     if mode == '0':
+
+        debug = True
+
         domains = ['as.com', 'elmundo.es', 'sport.es', 'viu.es', 'administracion.gob.es', 'sanidad.gob.es']
 
         for domain in domains:
             #print(f"")
-            if domainsAreRelated(input_domain, domain):
+            if domainsAreRelated(input_domain, domain, domain):
                 print(Fore.GREEN + f"Los dominios {input_domain} y {domain} están relacionados.")
                 print(Style.RESET_ALL)
             else:
@@ -377,15 +432,46 @@ if __name__ == "__main__":
             continue
 
     elif mode == '1':
+
+        print(f"Searching related domains for: {input_domain}")
+
+        i = 0
+        domains_found = []
+
+        reverse_domains = find_domains_by_ns_reverse(input_domain)
         
-        print(f"MODO NORMAL")
-        api_key = 'xxx'  # Reemplaza con tu clave de API de Google
-        cx = 'yyy'  # Reemplaza con tu ID de motor de búsqueda
+        if reverse_domains:
+            for domain in reverse_domains:
+                #print(f"{i} - {domain}")
+                #i += 1
+                domain_aux = domain
+                # Eliminar 'https://'
+                if domain_aux.startswith("https://"):
+                    domain_aux = domain_aux[len("https://"):]
+        
+                # Eliminar 'www.'
+                if domain_aux.startswith("www."):
+                    domain_aux = domain_aux[len("www."):]
+
+                        # Eliminar todo después del primer '/'
+                if '/' in domain_aux:
+                    domain_aux = domain_aux.split('/', 1)[0]
+
+                if domainsAreRelated(input_domain, domain_aux, domain):
+                    #print(Fore.GREEN + f"Los dominios {input_domain} y {domain} están relacionados.")
+                    #print(Style.RESET_ALL)
+                    domains_found.append(domain)
+                #else: 
+                    #print(Fore.RED + f"Los dominios {input_domain} y {domain} NO están relacionados.")
+                    #print(Style.RESET_ALL)
+                #print(f"")                
+                #si el link es un subdominio, lanzamos otra búsqueda con partes de su cadena.     
+        
+        api_key = 'AIzaSyBfCkGNd5XfOmexZZIP8AV1CmvXkp-ASIE'  # Reemplaza con tu clave de API de Google
+        cx = '25ede8c68d3bb45bb'  # Reemplaza con tu ID de motor de búsqueda
         
         domains = find_domains_by_google(api_key, cx, input_domain, 1000)
 
-        i = 0
-        related_domains = []
         for domain in domains:
             #print(f"{i} - {domain}")
             #i += 1
@@ -402,20 +488,49 @@ if __name__ == "__main__":
             if '/' in domain_aux:
                 domain_aux = domain_aux.split('/', 1)[0]
 
-            if domainsAreRelated(input_domain, domain_aux):
-                print(Fore.GREEN + f"Los dominios {input_domain} y {domain} están relacionados.")
-                print(Style.RESET_ALL)
-                related_domains.append(domain)
-            else: 
-                print(Fore.RED + f"Los dominios {input_domain} y {domain} NO están relacionados.")
-                print(Style.RESET_ALL)
+            if domainsAreRelated(input_domain, domain_aux, domain):
+                #print(Fore.GREEN + f"Los dominios {input_domain} y {domain} están relacionados.")
+                #print(Style.RESET_ALL)
+                domains_found.append(domain)
+            #else: 
+                #print(Fore.RED + f"Los dominios {input_domain} y {domain} NO están relacionados.")
+                #print(Style.RESET_ALL)
             #print(f"")                
             #si el link es un subdominio, lanzamos otra búsqueda con partes de su cadena.
 
-        print(f"DOMINOS RELACIONADOS ENCONTRADOS:")
+        related_domains = []
+        subdomains = []
+
+        for domain in domains_found:
+            if input_domain in domain:
+                subdomains.append(domain)
+            else:
+                related_domains.append(domain)
+
+        print(f"")
+        print(Fore.GREEN + f"SUBDOMINOS ENCONTRADOS:")
+
+        if subdomains:
+            for domain in subdomains:
+                 print(Style.RESET_ALL + domain)
+        else:
+            print(f"Ninguno.")
+
+        print(f"")
+        print(Fore.GREEN + f"DOMINOS RELACIONADOS ENCONTRADOS:")
+
         if related_domains:
             for domain in related_domains:
-                 print(domain)
+                 print(Style.RESET_ALL + domain)
+        else:
+            print(f"Ninguno.")
+
+        print(f"")
+        print(Fore.GREEN + f"DOMINOS PARCIALMENTE RELACIONADOS ENCONTRADOS:")
+
+        if partial_related_domains:
+            for domain in partial_related_domains:
+                 print(Style.RESET_ALL + domain)
         else:
             print(f"Ninguno.")
 
