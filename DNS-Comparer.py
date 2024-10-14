@@ -467,8 +467,8 @@ if __name__ == "__main__":
                 #print(f"")                
                 #si el link es un subdominio, lanzamos otra búsqueda con partes de su cadena.     
         
-        api_key = 'AIzaSyBfCkGNd5XfOmexZZIP8AV1CmvXkp-ASIE'  # Reemplaza con tu clave de API de Google
-        cx = '25ede8c68d3bb45bb'  # Reemplaza con tu ID de motor de búsqueda
+        api_key = 'xxx'  # Reemplaza con tu clave de API de Google
+        cx = 'yyy'  # Reemplaza con tu ID de motor de búsqueda
         
         domains = find_domains_by_google(api_key, cx, input_domain, 1000)
 
