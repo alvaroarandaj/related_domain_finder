@@ -31,7 +31,7 @@ The program has two modes:
 * <b>[0] Debug:</b> This is the debugging mode which shows step by step what it does during each of the domain analyzes that the program does. Only recommended if you want to see any specific details of any of the domains.
 * <b>[1] Normal:</b> This is the default mode of the program that keeps its output clean.
 
-You just have to select one of them, the program will ask you to enter the URL you want to analyze and all you have to do is wait for the results for around 10-15 minutes.
+You just have to select one of them, the program will ask you to enter the URL you want to analyze without the first 'www.' part and all you have to do is wait for the results for around 10-15 minutes.
 
 
 ## Flow
