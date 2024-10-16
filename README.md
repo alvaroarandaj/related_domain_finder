@@ -1,4 +1,4 @@
-# related_domain_finder
+# Related Domain Finder
 Tool to find domains related to an input domain
 
 
