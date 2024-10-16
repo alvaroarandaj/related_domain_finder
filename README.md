@@ -1,5 +1,5 @@
 # Related Domain Finder
-Tool to find domains related to an input domain
+A tool to find domains related to an input domain
 
 
 ## Prerequisites
